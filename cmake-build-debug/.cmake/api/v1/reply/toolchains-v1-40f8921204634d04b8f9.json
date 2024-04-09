@@ -10,17 +10,17 @@
 				{
 					"includeDirectories" : 
 					[
-						"D:/Program Files/JetBrains/CLion 2023.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include",
-						"D:/Program Files/JetBrains/CLion 2023.3.4/bin/mingw/include",
-						"D:/Program Files/JetBrains/CLion 2023.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed",
-						"D:/Program Files/JetBrains/CLion 2023.3.4/bin/mingw/x86_64-w64-mingw32/include",
+						"C:/Program Files/JetBrains/CLion 2023.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include",
+						"C:/Program Files/JetBrains/CLion 2023.3.4/bin/mingw/include",
+						"C:/Program Files/JetBrains/CLion 2023.3.4/bin/mingw/lib/gcc/x86_64-w64-mingw32/13.1.0/include-fixed",
+						"C:/Program Files/JetBrains/CLion 2023.3.4/bin/mingw/x86_64-w64-mingw32/include",
 						"/MinGW/include"
 					],
 					"linkDirectories" : [],
 					"linkFrameworkDirectories" : [],
 					"linkLibraries" : []
 				},
-				"path" : "D:/Program Files/JetBrains/CLion 2023.3.4/bin/mingw/bin/gcc.exe",
+				"path" : "C:/Program Files/JetBrains/CLion 2023.3.4/bin/mingw/bin/gcc.exe",
 				"version" : "13.1.0"
 			},
 			"language" : "C",
@@ -34,7 +34,7 @@
 			"compiler" : 
 			{
 				"implicit" : {},
-				"path" : "D:/Program Files/JetBrains/CLion 2023.3.4/bin/mingw/bin/windres.exe"
+				"path" : "C:/Program Files/JetBrains/CLion 2023.3.4/bin/mingw/bin/windres.exe"
 			},
 			"language" : "RC",
 			"sourceFileExtensions" : 

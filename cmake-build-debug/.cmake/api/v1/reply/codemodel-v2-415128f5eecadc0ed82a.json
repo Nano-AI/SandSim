@@ -49,8 +49,8 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "D:/Coding/SandSim/cmake-build-debug",
-		"source" : "D:/Coding/SandSim"
+		"build" : "C:/Users/adiba/CLionProjects/SandSim/cmake-build-debug",
+		"source" : "C:/Users/adiba/CLionProjects/SandSim"
 	},
 	"version" : 
 	{
