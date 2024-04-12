@@ -6,56 +6,85 @@
 #include <math.h>
 #include <stdio.h>
 
+// window parameters
+// screen width/height
 int S_WIDTH = 1000;
 int S_HEIGHT = 1000;
+// grid width/height
 int C_WIDTH = 250;
 int C_HEIGHT = 250;
+// brush radius
 int SPAWN_RADIUS = 5;
+// color change per update
 float COLOR_PERCENT = 0.001;
+// update interval
 float TIMER = 1000.0 / 220;
 
-
-//#define GRID false
-
-//RGBTRIPLE COLOR_1 = { 242, 145, 135 };
-//RGBTRIPLE COLOR_2 = { 139, 32, 211 };
-//RGBTRIPLE COLOR_3 = { 0, 160, 253 };
-//RGBTRIPLE COLOR_1 = { 135, 145, 242 };
-//RGBTRIPLE COLOR_2 = { 211, 32, 139 };
-//RGBTRIPLE COLOR_3 = { 253, 160, 0 };
+// 3 color gradient options
+/*
+RGBTRIPLE COLOR_1 = { 242, 145, 135 };
+RGBTRIPLE COLOR_2 = { 139, 32, 211 };
+RGBTRIPLE COLOR_3 = { 0, 160, 253 };
+RGBTRIPLE COLOR_1 = { 135, 145, 242 };
+RGBTRIPLE COLOR_2 = { 211, 32, 139 };
+RGBTRIPLE COLOR_3 = { 253, 160, 0 };
+*/
 RGBTRIPLE COLOR_1 = { 106, 86, 75 };
 RGBTRIPLE COLOR_2 = { 142, 131, 87 };
 RGBTRIPLE COLOR_3 = { 156, 196, 72 };
 
+// background color
+RGBTRIPLE BACKGROUND_COLOR = { 0, 0, 0 };
 
-#define BACKGROUND_COLOR RGB(0, 0, 0)
-
+// gradient color going left/right
 int colorDirection = 1;
+
+// function dec.
 void DrawGrid(HDC hdc, RECT rect);
 void UpdateGrid();
 void interpolateColor();
 
+bool inRange(int y, int x) {
+    return y >= 0 && y < C_HEIGHT && x >= 0 && x < C_WIDTH;
+}
+
+// particle struct
 typedef struct particle {
-    COLORREF c;
-    bool e;
+    COLORREF c; // color
+    bool e; // exists
+    bool a; // anchored
 } particle_t;
 
+// mouse properties
 POINT mouseLocation;
 bool leftMouseDown = false;
-
 bool rightMouseToggle = true;
 
-//particle_t grid[C_HEIGHT][C_WIDTH];
+// grid
 particle_t* grid;
 
+// current color
 COLORREF currentColor = RGB(0, 0, 0);
 
+// percent through gradient
 double colorPercent = 0.0;
 
-particle_t EMPTY = (particle_t) { RGB(0, 0, 0), false };
+// def of empty grid
+particle_t EMPTY = (particle_t) { RGB(0, 0, 0), false, false };
 
+// window class name
 const char g_szClassName[] = "sandWindowClass";
 
+particle_t at(particle_t* g, int i, int j) {
+    return inRange(i, j) ? g[i * C_HEIGHT + j] : EMPTY;
+}
+
+void set(particle_t* g, int i, int j, particle_t val) {
+    if (inRange(i, j)) {
+        g[i * C_HEIGHT + j] = val;
+    }
+}
+// windows setup
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
     static HDC hdcBuffer = NULL;
@@ -82,18 +111,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             }
             break;
         case WM_CREATE:
-//            printf("%llu\n", C_HEIGHT * C_WIDTH * sizeof(particle_t));
             grid = malloc((C_HEIGHT) * (C_WIDTH) * sizeof(particle_t));
             for (int i = 0; i < C_HEIGHT; i++) {
                 for (int j = 0; j < C_WIDTH; j++) {
-//                    grid[i][j] = EMPTY;
-                    grid[i * C_HEIGHT + j] = EMPTY;
+                    set(grid, i, j, EMPTY);
                 }
             }
-            printf("HEY");
             GetClientRect(hwnd, &clientRect);
             hdcBuffer = CreateCompatibleDC(NULL);
-//            hBitmap = CreateCompatibleBitmap(GetDC(hwnd), clientRect.right, clientRect.bottom);
             hBitmap = CreateCompatibleBitmap(GetDC(hwnd), clientRect.right, clientRect.bottom);
             SelectObject(hdcBuffer, hBitmap);
             break;
@@ -126,7 +151,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             return 0;
         }
         case WM_TIMER: {
-            // UpdateGrid();
             InvalidateRect(hwnd, NULL, FALSE);
             return 0;
         }
@@ -136,6 +160,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
     return 0;
 }
+
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     WNDCLASSEX wc;
@@ -190,25 +215,51 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     return Msg.wParam;
 }
 
-bool inRange(int y, int x) {
-    return y >= 0 && y < C_HEIGHT && x >= 0 && x < C_WIDTH;
-}
 
 int displace(int y, int x, particle_t* temp) {
     if (y >= C_HEIGHT - 1) return 2;
-//    if (inRange(y + 1, x) && !grid[y + 1][x].e && !temp[y + 1][x].e) {
     if (inRange(y + 1, x) && !grid[(y + 1) * C_HEIGHT + x].e && !temp[C_HEIGHT * (y + 1) + x].e) {
         return 0;
     }
-//    if (inRange(y + 1, x - 1) && !grid[y + 1][x - 1].e && !temp[y + 1][x - 1].e) {
+    boolean rightPossible = false;
+    boolean leftPossible = false;
     if (inRange(y + 1, x + 1) && !grid[C_HEIGHT * (y + 1) + x + 1].e && !temp[C_HEIGHT * (y + 1) + x + 1].e) {
-        return 1;
+        rightPossible = true;
     }
     if (inRange(y + 1, x - 1) && !grid[C_HEIGHT * (y + 1 ) + x - 1].e && !temp[C_HEIGHT * (y + 1) + x - 1].e) {
+        leftPossible = true;
+    }
+    if (rightPossible && leftPossible) {
+        return rand() < 0.5 ? 1 : -1;
+    }
+    if (rightPossible) {
+        return 1;
+    }
+    if (leftPossible) {
         return -1;
     }
-//    if (inRange(y + 1, x + 1) && !grid[y + 1][x + 1].e && !temp[y + 1][x - 1].e) {
     return 2;
+}
+
+void setAnchor(int y, int x, particle_t* g) {
+    // make sure it's not anchored
+    // bottom is empty
+    if (!g[C_HEIGHT * (y + 1) + x].a) {
+        g[C_HEIGHT * y + x].a = false;
+        return;
+    }
+    // bottom left is empty
+    if (inRange(y + 1, x - 1) && !g[C_HEIGHT * (y + 1) + (x - 1)].a) {
+        g[C_HEIGHT * y + x].a = false;
+        return;
+    }
+    // bottom right is empty
+    if (inRange(y + 1, x + 1) && !g[C_HEIGHT * (y + 1) + (x + 1)].a) {
+        g[C_HEIGHT * y + x].a = false;
+        return;
+    }
+    // it cannot move anywhere
+    g[C_HEIGHT * y + x].a = true;
 }
 
 particle_t* temp;
@@ -216,14 +267,16 @@ void UpdateGrid() {
     if (temp == NULL) {
         temp = malloc(C_WIDTH * C_HEIGHT * sizeof(particle_t));
     }
-//    memcpy(temp, grid, C_WIDTH * C_HEIGHT * sizeof(particle_t));
 
     for (int i = 0; i < C_HEIGHT; i++) {
         for (int j = 0; j < C_WIDTH; j++) {
+            set(temp, i, j, EMPTY);
+        }
+    }
+
+    for (int i = C_HEIGHT - 1; i > 0; --i) {
+        for (int j = 0; j < C_WIDTH; ++j) {
             int d = displace(i, j, temp);
-            if (!grid[C_HEIGHT * i + j].e) {
-                continue;
-            }
             if (inRange(i + 1, j) && (d == -1 || d == 0 || d == 1)) {
                 temp[C_HEIGHT * (i + 1) + j + d] = grid[C_HEIGHT * i + j];
                 grid[C_HEIGHT * i + j] = EMPTY;
@@ -231,7 +284,6 @@ void UpdateGrid() {
             } else {
                 temp[C_HEIGHT * i + j] = grid[C_HEIGHT * i + j];
                 grid[C_HEIGHT * i + j] = EMPTY;
-//                temp[C_HEIGHT * i + j] = EMPTY;
             }
         }
     }
@@ -284,7 +336,7 @@ void DrawGrid(HDC hdc, RECT rect) {
 
     const RECT screen = {0, 0, S_WIDTH, S_HEIGHT};
     HBRUSH brush;
-    brush = CreateSolidBrush(BACKGROUND_COLOR);
+    brush = CreateSolidBrush(RGB(BACKGROUND_COLOR.rgbtRed, BACKGROUND_COLOR.rgbtGreen, BACKGROUND_COLOR.rgbtBlue));
     FillRect(hdc, &screen, brush);
 
     for (int i = 0; i < C_WIDTH; ++i) {
@@ -295,7 +347,7 @@ void DrawGrid(HDC hdc, RECT rect) {
             if (leftMouseDown) {
                 if (sq(i - mouseLocation.x / cellWidth) + sq(j - mouseLocation.y / cellHeight) < sq(SPAWN_RADIUS)) {
                     interpolateColor();
-                    grid[C_HEIGHT * j + i] = (particle_t) { currentColor, true };
+                    grid[C_HEIGHT * j + i] = (particle_t) { currentColor, true, false };
                 }
             }
 
